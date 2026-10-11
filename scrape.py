@@ -34,12 +34,12 @@ def get_goisu_rank():
                     return int(match.group(1))
     return None
 
-def get_mynavi_rank():
-    """マイナビニュースからうお座の順位を取得"""
-    html = fetch_html("https://news.mynavi.jp/fortune/")
+def get_nifty_rank():
+    """nifty占いからうお座の順位を取得"""
+    html = fetch_html("https://uranai.nifty.com/kiou/horoscope/")
     if html:
         soup = BeautifulSoup(html, 'html.parser')
-        for el in soup.find_all(['li', 'div', 'article', 'tr']):
+        for el in soup.find_all(['div', 'li', 'p', 'section']):
             text = el.get_text()
             if 'うお座' in text or '魚座' in text:
                 match = re.search(r'(\d+)位', text)
@@ -47,43 +47,20 @@ def get_mynavi_rank():
                     return int(match.group(1))
     return None
 
-def get_dmenu_rank():
-    """dメニュー占いからうお座の順位を取得"""
-    html = fetch_html("https://fortune.dcm-gate.com/fortune/12constellation/")
-    if html:
-        soup = BeautifulSoup(html, 'html.parser')
-        for el in soup.find_all(['li', 'div', 'p', 'dt', 'dd']):
-            text = el.get_text()
-            if 'うお座' in text or '魚座' in text:
-                match = re.search(r'(\d+)位', text)
-                if match:
-                    return int(match.group(1))
-    return None
+# 各サイトからの順位取得
+goisu_rank = get_goisu_rank()
+nifty_rank = get_nifty_rank()
 
-def get_line_rank():
-    """LINE占いからうお座の順位を取得"""
-    html = fetch_html("https://fortune.line.me/fortune/12constellation/")
-    if html:
-        soup = BeautifulSoup(html, 'html.parser')
-        for el in soup.find_all(['li', 'div', 'p', 'span']):
-            text = el.get_text()
-            if 'うお座' in text or '魚座' in text:
-                match = re.search(r'(\d+)位', text)
-                if match:
-                    return int(match.group(1))
-    return None
-
-# 全サイトから順位を取得
 results = {
     "date": today,
-    "line": get_line_rank(),
-    "dmenu": get_dmenu_rank(),
-    "goisu": get_goisu_rank(),
-    "mynavi": get_mynavi_rank()
+    "line": None,
+    "dmenu": None,
+    "goisu": goisu_rank,
+    "mynavi": nifty_rank  # 枠を流用してniftyの順位を入れる
 }
 
-# 平均順位の計算（数値が取れたサイトのみ対象）
-ranks = [v for v in [results["line"], results["dmenu"], results["goisu"], results["mynavi"]] if v is not None]
+# 平均順位の計算（数値が取れたものだけで計算）
+ranks = [v for v in [results["goisu"], results["mynavi"]] if v is not None]
 results["average"] = round(sum(ranks) / len(ranks), 1) if ranks else None
 
 print(f"最終集計結果: {results}")
